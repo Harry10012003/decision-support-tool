@@ -112,7 +112,10 @@ data, probabilities = None, None
 if user_input:
     try:
         from io import StringIO
-        data_raw = pd.read_csv(StringIO(user_input), sep="\t", header=0, dtype=str)
+        # Thay thế dấu '–' thành dấu '-'
+        user_input_cleaned = user_input.replace('–', '-')
+        
+        data_raw = pd.read_csv(StringIO(user_input_cleaned), sep="\t", header=0, dtype=str)
         data_raw = data_raw.replace({",": ""}, regex=True)
 
         # Tách dòng xác suất
@@ -132,6 +135,7 @@ if user_input:
             # st.write(dict(zip(data.columns, probabilities)))
     except Exception as e:
         st.error(f"❌ Lỗi khi xử lý dữ liệu: {e}")
+
 
 # Tabs giao diện đơn giản hơn
 if data is not None and probabilities is not None:
@@ -247,4 +251,5 @@ if data is not None and probabilities is not None:
         st.markdown(styled_eol.to_html(), unsafe_allow_html=True)
 
         show_decision_full(data, result, 'EOL', maximize=False, label="Expected Opportunity Loss")
+
 
