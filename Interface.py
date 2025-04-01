@@ -191,31 +191,18 @@ if data is not None and probabilities is not None:
 
     with tab6:
         result, _ = decision_making_analysis(data, probabilities, is_profit)
+        show_decision_full(data, result, 'EMV', maximize=True, label="EMV")   
+        result, _ = decision_making_analysis(data, probabilities, is_profit)
+
+        # Tính EVwPI, EVwoPI và EVPI
         best_per_state = data.max(axis=0) if is_profit else data.min(axis=0)
         EVwPI = np.dot(best_per_state.values, probabilities)
         EVwoPI = result['EMV'].max() if is_profit else result['EMV'].min()
         EVPI = EVwPI - EVwoPI
 
-        # 🎯 Làm đẹp bảng EVwPI
-        best_per_state.index.name = None  # Xoá tên chỉ mục
-        styled_best = best_per_state.to_frame().style \
-            .format(precision=0) \
-            .set_properties(**{'text-align': 'center'}) \
-            .set_table_styles([
-                {'selector': 'th', 'props': [('color', '#1c3d5a'), ('font-weight', 'bold'), ('text-align', 'center')]}
-            ])
-
-        # Hiển thị bảng
-        st.markdown("""
-        <div style="padding:8px 20px;border-left:5px solid #4fc3f7;margin-bottom:10px;">
-            <h3 style="color:#4fc3f7;margin:0;"> Decision Table with Perfect Information</h3>
-        </div>
-        """, unsafe_allow_html=True)
-        st.markdown(styled_best.to_html(), unsafe_allow_html=True)
-
         # Kết luận
         st.markdown(f"""
-        <div style="background-color:#e8f4fd;padding:15px;border-radius:10px;border-left:5px solid #1c3d5a;">
+        <div style="background-color:#e8f4fd;padding:15px;border-radius:10px;border-left:5px solid #1c3d5a; margin-top: 20px;">
             <h4 style="color:#1c3d5a;margin-bottom:10px;">
                 🔮 <strong>Giá trị Thông tin Hoàn hảo (EVPI)</strong>
             </h4>
@@ -232,6 +219,8 @@ if data is not None and probabilities is not None:
             </ul>
         </div>
         """, unsafe_allow_html=True)
+
+            
 
     with tab7:
         result, opp_loss = decision_making_analysis(data, probabilities, is_profit)
@@ -258,3 +247,4 @@ if data is not None and probabilities is not None:
         st.markdown(styled_eol.to_html(), unsafe_allow_html=True)
 
         show_decision_full(data, result, 'EOL', maximize=False, label="Expected Opportunity Loss")
+
