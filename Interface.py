@@ -27,9 +27,18 @@ def decision_making_analysis(data, probabilities=None, maximize=True, alpha=0.6)
     return df, opp_loss_table
 
 # Hàm hiển thị bảng dữ liệu đầy đủ + 1 cột kết quả + kết luận
-def show_decision_full(data, result, column_name, maximize=True, label="Kết quả"):
-    df_display = data.copy()
-    df_display[column_name] = result[column_name]
+# Sửa
+# def show_decision_full(data, result, column_name, maximize=True, label="Kết quả"):
+#     df_display = data.copy()
+#     df_display[column_name] = result[column_name]
+#     df_display.index.name = None  # Ẩn tên index
+def show_decision_full(data, result, column_name, maximize=True, label="Kết quả", include_all_rows=False):
+    if include_all_rows:
+        df_display = result.copy()
+    else:
+        df_display = data.copy()
+        df_display[column_name] = result[column_name]
+
     df_display.index.name = None  # Ẩn tên index
 
     # Căn chỉnh bảng dữ liệu
@@ -44,30 +53,27 @@ def show_decision_full(data, result, column_name, maximize=True, label="Kết qu
     </div>
     """, unsafe_allow_html=True)
 
-    # Hiển thị bảng đã được định dạng
     st.markdown(styled_df.to_html(), unsafe_allow_html=True)
 
-    # Xử lý logic cho chọn giá trị tối ưu (lớn nhất nếu maximize = True, nhỏ nhất nếu maximize = False)
-    if maximize:  # Tối đa hóa lợi nhuận
-        best_value = result[column_name].max()  # Chọn giá trị lớn nhất
-    else:  # Tối thiểu hóa chi phí
-        best_value = result[column_name].min()  # Chọn giá trị nhỏ nhất
+    # Chỉ hiển thị kết luận nếu không bao gồm tất cả dòng (để tránh highlight "With perfect info")
+    if not include_all_rows:
+        if maximize:
+            best_value = result[column_name].max()
+        else:
+            best_value = result[column_name].min()
+        chosen_option = result[result[column_name] == best_value].index[0]
 
-    # Lựa chọn phương án có giá trị tốt nhất (lớn nhất hoặc nhỏ nhất)
-    chosen_option = result[result[column_name] == best_value].index[0]
-
-    # Hiển thị kết luận
-    st.markdown(f"""
-    <div style="background-color:#dff0d8;padding:15px;border-radius:10px;border-left:5px solid #3c763d;">
-        <h4 style="color:#2e5c2e;margin-bottom:10px;">
-            ✅ <strong>Chọn phương án <span style='color:#205081'>{chosen_option}</span> theo quy tắc <span style='color:#205081'>{label}</span></strong>
-        </h4>
-        <p style="color:#1f2d1f;margin:0;font-size:16px;">
-            Vì có giá trị <strong>{column_name}</strong> {'lớn nhất' if maximize else 'nhỏ nhất'} là: 
-            <code style="color:#000;background-color:#f7f7f7;padding:4px 8px;border-radius:6px;font-weight:bold;font-size:15px;">{best_value:,.0f}</code>
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+        st.markdown(f"""
+        <div style="background-color:#dff0d8;padding:15px;border-radius:10px;border-left:5px solid #3c763d;">
+            <h4 style="color:#2e5c2e;margin-bottom:10px;">
+                ✅ <strong>Chọn phương án <span style='color:#205081'>{chosen_option}</span> theo quy tắc <span style='color:#205081'>{label}</span></strong>
+            </h4>
+            <p style="color:#1f2d1f;margin:0;font-size:16px;">
+                Vì có giá trị <strong>{column_name}</strong> {'lớn nhất' if maximize else 'nhỏ nhất'} là: 
+                <code style="color:#000;background-color:#f7f7f7;padding:4px 8px;border-radius:6px;font-weight:bold;font-size:15px;">{best_value:,.0f}</code>
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
 
 st.set_page_config(page_title="Công cụ ra quyết định", layout="wide")
 
@@ -144,17 +150,17 @@ if data is not None and probabilities is not None:
         "🔮 EVPI", "📘 EOL"
     ])
 
-with tab1:
-    result, _ = decision_making_analysis(data, probabilities, st.session_state.maximize)  # Thay vì maximize=True
-    show_decision_full(data, result, 'Lạc Quan', maximize=st.session_state.maximize, label="Lạc Quan")
+    with tab1:
+        result, _ = decision_making_analysis(data, probabilities, st.session_state.maximize)  # Thay vì maximize=True
+        show_decision_full(data, result, 'Lạc Quan', maximize=st.session_state.maximize, label="Lạc Quan")
 
-with tab2:
-    result, _ = decision_making_analysis(data, probabilities, st.session_state.maximize)  # Thay vì maximize=True
-    show_decision_full(data, result, 'Bi Quan', maximize=st.session_state.maximize, label="Bi Quan")
+    with tab2:
+        result, _ = decision_making_analysis(data, probabilities, st.session_state.maximize)  # Thay vì maximize=True
+        show_decision_full(data, result, 'Bi Quan', maximize=st.session_state.maximize, label="Bi Quan")
 
-with tab3:
-    result, _ = decision_making_analysis(data, probabilities, st.session_state.maximize)  # Thay vì maximize=st.session_state.maximize
-    show_decision_full(data, result, 'Trung Bình', maximize=st.session_state.maximize, label="Equally Likely")
+    with tab3:
+        result, _ = decision_making_analysis(data, probabilities, st.session_state.maximize)  # Thay vì maximize=st.session_state.maximize
+        show_decision_full(data, result, 'Trung Bình', maximize=st.session_state.maximize, label="Equally Likely")
 
     with tab4:
         alpha_Realism = st.number_input(
@@ -186,18 +192,40 @@ with tab3:
         show_decision_full(data, result, 'Minimax Regret', maximize=False, label="Minimax Regret")
 
     with tab6:
-        result, _ = decision_making_analysis(data, probabilities, st.session_state.maximize)
-        show_decision_full(data, result, 'EMV', maximize=True, label="EMV")
-
+        # 1. Phân tích kết quả EMV
         result, _ = decision_making_analysis(data, probabilities, st.session_state.maximize)
 
-        # Tính EVwPI, EVwoPI và EVPI
+        # 2. Tính With Perfect Info: giá trị tối ưu cho từng cột
         best_per_state = data.max(axis=0) if st.session_state.maximize else data.min(axis=0)
         EVwPI = np.dot(best_per_state.values, probabilities)
-        EVwoPI = result['EMV'].max() if st.session_state.maximize else result['EMV'].min()
-        EVPI = EVwPI - EVwoPI
 
-        # Kết luận
+        # 3. Tính EMV từng phương án (nếu chưa có)
+        result['EMV'] = data.dot(probabilities)
+
+        # 4. Tính EVwoPI
+        EVwoPI = result['EMV'].max() if st.session_state.maximize else result['EMV'].min()
+
+        # 5. Tính EVPI
+        EVPI = abs(EVwPI - EVwoPI)
+
+
+        # 6. Thêm dòng "With perfect info" vào bảng kết quả
+        result.loc["With perfect info", data.columns] = best_per_state
+        result.loc["With perfect info", "EMV"] = EVwPI
+
+        # 7. Giữ lại cột cần thiết
+        cols_to_keep = list(data.columns) + ['EMV']
+        result = result[cols_to_keep]
+
+        # 8. Hiển thị bảng kết quả
+        show_decision_full(
+            data, result, 'EMV',
+            maximize=st.session_state.maximize,
+            label="Giá trị kỳ vọng (EMV) và Thông tin hoàn hảo",
+            include_all_rows=True  # để không lọc dòng "With perfect info"
+        )
+
+        # 9. Hiển thị kết luận về EVPI
         st.markdown(f"""
         <div style="background-color:#e8f4fd;padding:15px;border-radius:10px;border-left:5px solid #1c3d5a; margin-top: 20px;">
             <h4 style="color:#1c3d5a;margin-bottom:10px;">
@@ -210,34 +238,42 @@ with tab3:
                 <li><strong>🧮 EMV tốt nhất</strong>: 
                     <code style="color:#000;background-color:#f7f7f7;padding:4px 8px;border-radius:6px;font-weight:bold;">{EVwoPI:,.2f}</code>
                 </li>
-                <li><strong>💡 EVPI</strong>: 
+                <li><strong>💡 So the maximum you should pay for the additional information is </strong>: 
                     <code style="color:#000;background-color:#e0ffe0;padding:4px 8px;border-radius:6px;font-weight:bold;">{EVPI:,.2f}</code>
                 </li>
             </ul>
         </div>
         """, unsafe_allow_html=True)
-with tab7:
-        result, opp_loss = decision_making_analysis(data, probabilities, maximize)
-        EOL_table = opp_loss.copy()
-        for col in EOL_table.columns:
-            EOL_table[col] = EOL_table[col] * probabilities[list(EOL_table.columns).index(col)]
-        result['EOL'] = EOL_table.sum(axis=1)
 
-        # Xử lý format bảng EOL đẹp
-        EOL_table.index.name = None
-        styled_eol = EOL_table.style \
+    with tab7:
+        # Phân tích với trạng thái maximize hiện tại
+        result, opp_loss = decision_making_analysis(data, probabilities, st.session_state.maximize)
+
+        # Bảng EOL nhân với xác suất để tính EOL
+        EOL_table_with_probabilities = opp_loss.copy()
+        for i, col in enumerate(EOL_table_with_probabilities.columns):
+            EOL_table_with_probabilities[col] *= probabilities[i]
+        result['EOL'] = EOL_table_with_probabilities.sum(axis=1)
+
+        # Bảng EOL không nhân xác suất – chỉ để hiển thị
+        EOL_table_no_probabilities = opp_loss.copy()
+        EOL_table_no_probabilities.index.name = None
+
+        # Hiển thị bảng đẹp
+        styled_eol = EOL_table_no_probabilities.style \
             .format(precision=0) \
             .set_properties(**{'text-align': 'center'}) \
             .set_table_styles([
                 {'selector': 'th', 'props': [('color', '#0277bd'), ('font-weight', 'bold'), ('text-align', 'center')]}
             ])
 
-        # Tiêu đề và bảng
         st.markdown("""
         <div style="padding:8px 20px;border-left:5px solid #29b6f6;margin-bottom:10px;">
             <h3 style="color:#29b6f6;margin:0;"> Bảng Expected Opportunity Loss (EOL)</h3>
         </div>
         """, unsafe_allow_html=True)
+
         st.markdown(styled_eol.to_html(), unsafe_allow_html=True)
 
+        # Hiển thị kết quả lựa chọn phương án với EOL
         show_decision_full(data, result, 'EOL', maximize=False, label="Expected Opportunity Loss")
